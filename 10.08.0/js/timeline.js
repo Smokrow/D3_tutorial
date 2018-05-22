@@ -4,13 +4,15 @@
 *    FreedomCorp Dashboard
 */
 
-Timeline = function(_parentElement){
+class Timeline
+{
+  constructor(_parentElement)
+  {
     this.parentElement = _parentElement;
-
     this.initVis();
-};
-
-Timeline.prototype.initVis = function(){
+  }
+  initVis()
+  {
     var vis = this;
 
     vis.margin = {top: 0, right: 100, bottom: 20, left: 80};
@@ -46,24 +48,24 @@ Timeline.prototype.initVis = function(){
     vis.brush = d3.brushX()
         .handleSize(10)
         .extent([[0, 0], [vis.width, vis.height]])
-        .on("brush end", brushed)
+        //.on("brush end", brushed)
 
     // Append brush component
     vis.brushComponent = vis.g.append("g")
         .attr("class", "brush")
         .call(vis.brush);
-
-    vis.wrangleData();
-};
-
-Timeline.prototype.wrangleData = function(){
+  }
+  wrangleData(data)
+  {
     var vis = this;
 
     vis.variable = "call_revenue"
-
+    console.log(data)
     vis.dayNest = d3.nest()
-        .key(function(d){ return formatTime(d.date); })
-        .entries(calls)
+        .key(d=> d.date)
+        .entries(data)
+    console.log("day")
+    console.log(vis.dayNest)
 
     vis.dataFiltered = vis.dayNest
         .map(function(day){
@@ -71,18 +73,19 @@ Timeline.prototype.wrangleData = function(){
                 date: day.key,
                 sum: day.values.reduce(function(accumulator, current){
                     return accumulator + current[vis.variable]
-                }, 0)               
+                }, 0)
             }
 
         })
 
     vis.updateVis();
-}
 
-Timeline.prototype.updateVis = function(){
+  }
+  updateVis()
+  {
     var vis = this;
-
-    vis.x.domain(d3.extent(vis.dataFiltered, (d) => { return parseTime(d.date); }));
+    this.parseDate = d3.timeParse("%d/%m/%Y")
+    vis.x.domain(d3.extent(vis.dataFiltered, (d) => { return this.parseDate(d.date); }));
     vis.y.domain([0, d3.max(vis.dataFiltered, (d) => d.sum) ])
 
     vis.xAxisCall.scale(vis.x)
@@ -90,16 +93,17 @@ Timeline.prototype.updateVis = function(){
     vis.xAxis.transition(vis.t()).call(vis.xAxisCall)
 
     vis.area0 = d3.area()
-        .x((d) => { return vis.x(parseTime(d.date)); })
+        .x((d) => { return vis.x(vis.parseDate(d.date)); })
         .y0(vis.height)
         .y1(vis.height);
 
     vis.area = d3.area()
-        .x((d) => { return vis.x(parseTime(d.date)); })
+        .x((d) => { return vis.x(vis.parseDate(d.date)); })
         .y0(vis.height)
         .y1((d) => { return vis.y(d.sum); })
 
     vis.areaPath
         .data([vis.dataFiltered])
         .attr("d", vis.area);
+  }
 }
