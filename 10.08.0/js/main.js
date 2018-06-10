@@ -8,23 +8,31 @@
 
 var stackChart_conf={"width":800,
                      "height":400};
-console.log("TimelineInit")
+
 var timeline=new Timeline("#timeline")
 var Stacked=new StackedChart("#stacked-area",stackChart_conf);
-console.log("Hello")
+var pie1= new DonutChart("#company-size")
+console.log("Biatc")
+console.log(pie1)
+
+
+d3.json("data/calls.json").then((data)=>{
+  console.log("Nicoooooo")
+  console.log(timeline)
+})
 
 d3.json("data/calls.json").then(function(data){
-    console.log(data)
-    console.log("Balbla")
+
     function onchange()
     {
       var dataPointer=$("#var-select").val()
       Stacked.wrangleData(data,dataPointer)
       Stacked.update_vis()
-      console.log("Here comes the timeline")
-      console.log(data)
+
       timeline.wrangleData(data)
       timeline.updateVis()
+
+      pie1.wrangleData(data)
     }
     $("#var-select").on("change",onchange)
 

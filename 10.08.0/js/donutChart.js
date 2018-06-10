@@ -5,24 +5,29 @@
 *    FreedomCorp Dashboard
 */
 
-DonutChart = function(_parentElement, _variable){
-    this.parentElement = _parentElement;
-    this.variable = _variable;
-
-    this.initVis();
-};
-
-DonutChart.prototype.initVis = function(){
+class DonutChart
+{
+  constructor (_parentElement, _variable)
+  {
+  this.parentElement = _parentElement;
+  this.variable = _variable;
+  this.initVis();
+  console.log("Help")
+  }
+  initVis()
+  {
     var vis = this;
+
 
     vis.margin = { left:0, right:0, top:40, bottom:0 };
     vis.width = 250 - vis.margin.left - vis.margin.right;
     vis.height = 250 - vis.margin.top - vis.margin.bottom;
     vis.radius = Math.min(vis.width, vis.height) / 2;
 
+
     vis.pie = d3.pie()
         .padAngle(0.03)
-        .value(function(d) { return d.data[vis.variable]; })
+        .value(function(d) { return d.value; })
         .sort(null);
 
     vis.arc = d3.arc()
@@ -34,7 +39,7 @@ DonutChart.prototype.initVis = function(){
         .attr("width", vis.width + vis.margin.left + vis.margin.right)
         .attr("height", vis.height + vis.margin.top + vis.margin.bottom);
     vis.g = vis.svg.append("g")
-        .attr("transform", "translate(" + (vis.margin.left + (vis.width / 2)) + 
+        .attr("transform", "translate(" + (vis.margin.left + (vis.width / 2)) +
             ", " + (vis.margin.top + (vis.height / 2)) + ")");
 
     vis.g.append("text")
@@ -42,31 +47,63 @@ DonutChart.prototype.initVis = function(){
         .attr("x", -vis.width/2)
         .attr("font-size", "15px")
         .attr("text-anchor", "start")
-        .text(vis.variable == "market_cap" ? 
+        .text(vis.variable == "market_cap" ?
             "Market Capitalization" : "24 Hour Trading Volume");
 
-    vis.wrangleData();
-}
+  }
 
-DonutChart.prototype.wrangleData = function(){
+  wrangleData(data)
+  {
     var vis = this;
-
-    vis.activeCoin = $("#coin-select").val();
-
+    console.log("Humpel")
+    console.log(data)
+    vis.data=data.reduce((acc,i)=>
+      {
+        acc[i.company_size]+=1
+        console.log(acc)
+        return acc
+      }, {"small":0,"medium":0,"large":0});
+    vis.data_in=[{"label":"small","value":vis.data["small"]},
+              {"label":"medium","value":vis.data["medium"]},
+              {"label":"large","value":vis.data["large"]}];
+    console.log("Here is the pie data")
+    console.log(vis.data_in)
     vis.updateVis();
-}
 
-DonutChart.prototype.updateVis = function(){
+  }
+  updateVis()
+  {
+
     var vis = this;
 
     vis.path = vis.g.selectAll("path");
-
+    console.log("Hello")
     vis.data0 = vis.path.data();
-    vis.data1 = vis.pie(donutData);
 
+    vis.data1 = vis.pie(vis.data_in);
+
+    console.log(vis.data1)
     // JOIN elements with new data.
-    vis.path = vis.path.data(vis.data1, key);
+    vis.path = vis.path.data(vis.data1);
 
+
+
+    var g = vis.svg.selectAll(".arc")
+      .data(vis.data1)
+    .enter().append("g")
+      .attr("class", "arc");
+
+
+
+  g.append("path")
+      .attr("d", vis.arc)
+      .style("fill", function(d) { return color(d.data); });
+/*
+  g.append("text")
+      .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
+      .attr("dy", ".35em")
+      .text(function(d) { return d.data; });
+*/
     // EXIT old elements from the screen.
     vis.path.exit()
         .datum(function(d, i) { return findNeighborArc(i, vis.data1, vis.data0, key) || d; })
@@ -74,7 +111,7 @@ DonutChart.prototype.updateVis = function(){
         .duration(750)
         .attrTween("d", arcTween)
         .remove();
-    
+
     // UPDATE elements still on the screen.
     vis.path.transition()
         .duration(750)
@@ -86,15 +123,8 @@ DonutChart.prototype.updateVis = function(){
     // ENTER new elements in the array.
     vis.path.enter()
         .append("path")
-        .each(function(d, i) { this._current = findNeighborArc(i, vis.data0, vis.data1, key) || d; }) 
-        .attr("fill", function(d) {  return color(d.data.coin) })
-        .attr("fill-opacity", function(d) {
-            return (d.data.coin == vis.activeCoin) ? 1 : 0.3;
-        })
-        .on("click", arcClicked)
-        .transition()
-        .duration(750)
-            .attrTween("d", arcTween);
+        .each(function(d, i) { this._current = findNeighborArc(i, vis.data0, vis.data1, key) || d; })
+        .attr("fill","red")
 
     function key(d){
         return d.data.coin;
@@ -134,5 +164,7 @@ DonutChart.prototype.updateVis = function(){
         this._current = i(1)
         return function(t) { return vis.arc(i(t)); };
     }
+
+  }
 
 }

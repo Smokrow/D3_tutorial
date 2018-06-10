@@ -60,12 +60,10 @@ class Timeline
     var vis = this;
 
     vis.variable = "call_revenue"
-    console.log(data)
+
     vis.dayNest = d3.nest()
         .key(d=> d.date)
         .entries(data)
-    console.log("day")
-    console.log(vis.dayNest)
 
     vis.dataFiltered = vis.dayNest
         .map(function(day){
