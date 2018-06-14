@@ -12,7 +12,6 @@ class DonutChart
   this.parentElement = _parentElement;
   this.variable = _variable;
   this.initVis();
-  console.log("Help")
   }
   initVis()
   {
@@ -48,26 +47,33 @@ class DonutChart
         .attr("font-size", "15px")
         .attr("text-anchor", "start")
         .text(vis.variable == "market_cap" ?
-            "Market Capitalization" : "24 Hour Trading Volume");
+            "Market Capitalization" : "Company Size");
+      vis.myData=["small","medium","large"]
+      vis.color= d3.scaleOrdinal()
+          .domain(vis.myData)
+          .range(d3.schemeCategory10);
+    var legend=vis.svg.append("g").attr("id","label").attr("transform","translate(170,75)")
 
+
+    legend.append("rect").attr("fill","white").attr("width", 70).attr("height", 115 ).attr("stroke","black");
+    vis.myData.forEach((d,i)=>{
+      var g=legend.append("g").attr("transform","translate(5,"+(10+i*40)+")")
+      g.append("rect").attr("width", 10).attr("height", 10 ).attr("fill",vis.color(d));
+      g.append("text").text(d).attr("transform","translate(12,10)")
+    })
   }
 
   wrangleData(data)
   {
     var vis = this;
-    console.log("Humpel")
-    console.log(data)
     vis.data=data.reduce((acc,i)=>
       {
         acc[i.company_size]+=1
-        console.log(acc)
         return acc
       }, {"small":0,"medium":0,"large":0});
     vis.data_in=[{"label":"small","value":vis.data["small"]},
               {"label":"medium","value":vis.data["medium"]},
               {"label":"large","value":vis.data["large"]}];
-    console.log("Here is the pie data")
-    console.log(vis.data_in)
     vis.updateVis();
 
   }
@@ -77,12 +83,10 @@ class DonutChart
     var vis = this;
 
     vis.path = vis.g.selectAll("path");
-    console.log("Hello")
     vis.data0 = vis.path.data();
 
     vis.data1 = vis.pie(vis.data_in);
 
-    console.log(vis.data1)
     // JOIN elements with new data.
     vis.path = vis.path.data(vis.data1);
 
@@ -97,7 +101,13 @@ class DonutChart
 
   g.append("path")
       .attr("d", vis.arc)
-      .style("fill", function(d) { return color(d.data); });
+      .style("fill", function(d) { return vis.color(d.data.label); })
+      .attr("data-legend",function(d) { return d.data.label})
+      .attr("transform", "translate(" + (vis.margin.left- 50 + (vis.width / 2)) +
+          ", " + (vis.margin.top + (vis.height / 2)) + ")");
+
+
+
 /*
   g.append("text")
       .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
